@@ -1,23 +1,32 @@
 package com.emreonal.eterationcase.ui.navigation
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -33,6 +42,7 @@ import com.emreonal.eterationcase.ui.list.ProductListRootScreen
 import com.emreonal.eterationcase.ui.list.ProductUiModel
 import com.emreonal.eterationcase.ui.profile.ProfileScreen
 import com.emreonal.eterationcase.ui.theme.Main
+import com.emreonal.eterationcase.ui.theme.White
 
 sealed class Screen(val route: String, val label: String, val icon: Int = 0) {
     data object Home : Screen(route = "home", label = "Home", icon = R.drawable.ic_home)
@@ -46,23 +56,47 @@ sealed class Screen(val route: String, val label: String, val icon: Int = 0) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppRoot() {
     val navController = rememberNavController()
     val cartViewModel: CartViewModel = hiltViewModel()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing.only(
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+        ),
         bottomBar = {
             BottomBar(
                 navController = navController,
-                cartCount = cartViewModel.totalItemCount.collectAsState().value
+                cartCount = cartViewModel.totalItemCount.collectAsStateWithLifecycle().value
             )
+        },
+        topBar = {
+            if (currentRoute != Screen.Detail.route) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "E-Market",
+                            color = White,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Main
+                    )
+                )
+            }
         }
     ) { padding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(padding)
+            modifier = Modifier
+                .padding(padding)
+                .consumeWindowInsets(padding)
         ) {
             composable(Screen.Home.route) {
 
